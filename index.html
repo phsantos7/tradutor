@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Tradutor Online</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Tradutor Português → Outras Línguas</h1>
+
+    <textarea id="inputText" placeholder="Digite o texto em português..."></textarea>
+
+    <select id="targetLanguage">
+      <option value="en">Inglês</option>
+      <option value="es">Espanhol</option>
+      <option value="fr">Francês</option>
+      <option value="de">Alemão</option>
+      <option value="it">Italiano</option>
+    </select>
+
+    <button onclick="traduzirTexto()">Traduzir</button>
+
+    <h2>Tradução:</h2>
+    <p id="outputText"></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
