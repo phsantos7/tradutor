@@ -1,31 +1,56 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Tradutor Multilíngue</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Tradutor com LibreTranslate</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+    textarea, select, button { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
+    #output { margin-top: 20px; font-weight: bold; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Tradutor Português → Vários Idiomas</h1>
 
-    <textarea id="inputText" placeholder="Digite o texto em português..."></textarea>
+  <h1>Tradutor</h1>
+  
+  <label>Texto para traduzir:</label>
+  <textarea id="inputText" rows="4"></textarea>
 
-    <label for="targetLanguages">Selecione os idiomas:</label>
-    <select id="targetLanguages" multiple>
-      <option value="en">Inglês</option>
-      <option value="es">Espanhol</option>
-      <option value="fr">Francês</option>
-      <option value="de">Alemão</option>
-      <option value="it">Italiano</option>
-    </select>
+  <label>Idioma de destino:</label>
+  <select id="targetLang">
+    <option value="en">Inglês</option>
+    <option value="es">Espanhol</option>
+    <option value="fr">Francês</option>
+    <option value="de">Alemão</option>
+    <option value="it">Italiano</option>
+  </select>
 
-    <button onclick="traduzirTexto()">Traduzir</button>
+  <button onclick="traduzir()">Traduzir</button>
 
-    <h2>Traduções:</h2>
-    <div id="outputArea"></div>
-  </div>
+  <div id="output"></div>
 
-  <script src="script.js"></script>
+  <script>
+    async function traduzir() {
+      const texto = document.getElementById("inputText").value;
+      const idiomaDestino = document.getElementById("targetLang").value;
+
+      const response = await fetch("https://libretranslate.de/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          q: texto,
+          source: "auto",
+          target: idiomaDestino,
+          format: "text"
+        })
+      });
+
+      const data = await response.json();
+      document.getElementById("output").innerText = "Tradução: " + data.translatedText;
+    }
+  </script>
+
 </body>
 </html>
