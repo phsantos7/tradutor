@@ -1,18 +1,62 @@
 async function traduzirTexto() {
-  const texto = document.getElementById("inputText").value;
-  const idiomaDestino = document.getElementById("targetLanguage").value;
+  const texto = document.getElementById("inputText").value.trim();
+  const select = document.getElementById("targetLanguages");
+  const outputArea = document.getElementById("outputArea");
 
-  const resposta = await fetch("https://libretranslate.de/translate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      q: texto,
-      source: "pt",
-      target: idiomaDestino,
-      format: "text"
-    })
-  });
+  if (!texto) {
+    alert("Digite algum texto para traduzir.");
+    return;
+  }
 
-  const dados = await resposta.json();
-  document.getElementById("outputText").textContent = dados.translatedText;
+  const idiomas = Array.from(select.selectedOptions).map(opt => opt.value);
+
+  if (idiomas.length === 0) {
+    alert("Selecione pelo menos um idioma.");
+    return;
+  }
+
+  outputArea.innerHTML = "<p>Traduzindo...</p>";
+
+  outputArea.innerHTML = "";
+
+  for (let idioma of idiomas) {
+    try {
+      const resposta = await fetch("https://translate.argosopentech.com/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          q: texto,
+          source: "pt",
+          target: idioma,
+          format: "text"
+        })
+      });
+
+      const dados = await resposta.json();
+
+      const div = document.createElement("div");
+      div.classList.add("output");
+      div.innerHTML = `<strong>${nomeDoIdioma(idioma)}:</strong><br>${dados.translatedText}`;
+      outputArea.appendChild(div);
+
+    } catch (erro) {
+      const div = document.createElement("div");
+      div.classList.add("output");
+      div.innerHTML = `<strong>${nomeDoIdioma(idioma)}:</strong><br>Erro ao traduzir.`;
+      outputArea.appendChild(div);
+    }
+  }
+}
+
+function nomeDoIdioma(codigo) {
+  const nomes = {
+    en: "Inglês",
+    es: "Espanhol",
+    fr: "Francês",
+    de: "Alemão",
+    it: "Italiano"
+  };
+  return nomes[codigo] || codigo;
 }

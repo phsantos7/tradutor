@@ -2,16 +2,17 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Tradutor Online</title>
+  <title>Tradutor Multilíngue</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Tradutor Português → Outras Línguas</h1>
+    <h1>Tradutor Português → Vários Idiomas</h1>
 
     <textarea id="inputText" placeholder="Digite o texto em português..."></textarea>
 
-    <select id="targetLanguage">
+    <label for="targetLanguages">Selecione os idiomas:</label>
+    <select id="targetLanguages" multiple>
       <option value="en">Inglês</option>
       <option value="es">Espanhol</option>
       <option value="fr">Francês</option>
@@ -21,8 +22,8 @@
 
     <button onclick="traduzirTexto()">Traduzir</button>
 
-    <h2>Tradução:</h2>
-    <p id="outputText"></p>
+    <h2>Traduções:</h2>
+    <div id="outputArea"></div>
   </div>
 
   <script src="script.js"></script>
