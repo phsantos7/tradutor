@@ -1,23 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Tradutor com LibreTranslate</title>
+  <meta charset="UTF-8" />
+  <title>Tradutor com MyMemory API</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-    textarea, select, button { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
-    #output { margin-top: 20px; font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      background-color: #f7f7f7;
+    }
+    textarea, button, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    .lang-options {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .output {
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .lang-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 18px;
+    }
+    .translation {
+      margin-bottom: 10px;
+      padding: 8px;
+      background: #f1f1f1;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+    }
+    .translation:hover {
+      background: #e0e0e0;
+    }
+    .copy-btn {
+      position: absolute;
+      right: 10px;
+      top: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #007bff;
+    }
+    .copy-btn:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Tradutor</h1>
-  
-  <label>Texto para traduzir:</label>
-  <textarea id="inputText" rows="4"></textarea>
+  <h1>Tradutor com API MyMemory</h1>
 
-  <label>Idioma de destino:</label>
-  <select id="targetLang">
+  <label for="sourceLang">Idioma de origem:</label>
+  <select id="sourceLang">
+    <option value="pt-BR">Português</option>
     <option value="en">Inglês</option>
     <option value="es">Espanhol</option>
     <option value="fr">Francês</option>
@@ -25,31 +76,125 @@
     <option value="it">Italiano</option>
   </select>
 
+  <textarea id="inputText" rows="4" placeholder="Digite seu texto..."></textarea>
+
+  <div class="lang-options">
+    <label><input checked type="checkbox" value="en" /> Inglês</label>
+    <label><input checked type="checkbox" value="es" /> Espanhol</label>
+    <label><input checked type="checkbox" value="fr" /> Francês</label>
+    <label><input checked type="checkbox" value="de" /> Alemão</label>
+    <label><input checked type="checkbox" value="it" /> Italiano</label>
+    <label><input checked type="checkbox" value="pt-BR" /> Português</label>
+  </div>
+
   <button onclick="traduzir()">Traduzir</button>
 
   <div id="output"></div>
 
   <script>
+    const nomesIdiomas = {
+      en: "Inglês",
+      es: "Espanhol",
+      fr: "Francês",
+      de: "Alemão",
+      it: "Italiano",
+      "pt-BR": "Português"
+    };
+
     async function traduzir() {
-      const texto = document.getElementById("inputText").value;
-      const idiomaDestino = document.getElementById("targetLang").value;
+      const texto = document.getElementById("inputText").value.trim();
+      const output = document.getElementById("output");
+      const idiomaOrigem = document.getElementById("sourceLang").value;
+      const idiomasSelecionados = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(input => input.value);
 
-      const response = await fetch("https://libretranslate.de/translate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          q: texto,
-          source: "auto",
-          target: idiomaDestino,
-          format: "text"
-        })
-      });
+      output.innerHTML = "";
 
-      const data = await response.json();
-      document.getElementById("output").innerText = "Tradução: " + data.translatedText;
+      if (!texto) {
+        output.innerHTML = "<p style='color:red;'>Digite um texto para traduzir.</p>";
+        return;
+      }
+
+      if (idiomasSelecionados.length === 0) {
+        output.innerHTML = "<p style='color:red;'>Selecione pelo menos um idioma.</p>";
+        return;
+      }
+
+      for (const idioma of idiomasSelecionados) {
+        if (idioma === idiomaOrigem) continue;
+
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=${idiomaOrigem}|${idioma}`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+
+          let traducao = data.responseData.translatedText;
+
+          if (idioma === 'es') {
+            const boasTraducoes = data.matches.filter(m =>
+              m.translation &&
+              m.translation.length > 1 &&
+              m.segment.toLowerCase() !== m.translation.toLowerCase() &&
+              m.target.toLowerCase() === `${idiomaOrigem.toLowerCase()}|es`
+            ).sort((a, b) => b.match - a.match);
+
+            if (boasTraducoes.length > 0) {
+              traducao = boasTraducoes[0].translation;
+            }
+          }
+
+          const div = document.createElement("div");
+          div.className = "output";
+          div.innerHTML = `<div class="lang-title">${nomesIdiomas[idioma]}:</div>`;
+
+          const transDiv = document.createElement("div");
+          transDiv.className = "translation";
+          transDiv.innerHTML = `
+            ${traducao}
+            <button class="copy-btn" onclick="event.stopPropagation(); copiarTexto('${traducao.replace(/'/g, "\\'")}')">📋</button>
+          `;
+          transDiv.onclick = () => traduzirReverso(traducao, idioma, idiomaOrigem);
+
+          div.appendChild(transDiv);
+          output.appendChild(div);
+        } catch (error) {
+          const div = document.createElement("div");
+          div.className = "output";
+          div.innerHTML = `<div class="lang-title">${nomesIdiomas[idioma]}:</div><div style="color:red;">Erro ao traduzir.</div>`;
+          output.appendChild(div);
+          console.error("Erro:", error);
+        }
+      }
     }
+
+    async function traduzirReverso(texto, origem, destino) {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=${origem}|${destino}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        alert(`Tradução reversa:\n\n${data.responseData.translatedText}`);
+      } catch {
+        alert("Erro ao traduzir reversamente.");
+      }
+    }
+
+    function copiarTexto(texto) {
+      navigator.clipboard.writeText(texto).then(() => alert("Texto copiado!"));
+    }
+
+    // ✅ Desmarcar automaticamente o idioma de origem da lista de destino ao mudar o select
+    document.getElementById("sourceLang").addEventListener("change", () => {
+      const origem = document.getElementById("sourceLang").value;
+      const checkboxes = document.querySelectorAll('.lang-options input[type="checkbox"]');
+
+      checkboxes.forEach(cb => {
+        // Não trava o checkbox — só desmarca se estiver igual ao novo idioma de origem
+        if (cb.value === origem && cb.checked) {
+          cb.checked = false;
+        }
+      });
+    });
   </script>
 
 </body>
